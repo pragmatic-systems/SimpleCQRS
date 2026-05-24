@@ -317,8 +317,8 @@ __pycache__/
 *.pyc
 
 # Cake - Uncomment if you are using it
-# tools/**
-# !tools/packages.config
+**/tools/**
+!**/tools/packages.config
 
 # Tabs Studio
 *.tss
@@ -359,5 +359,12 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
+# Local Settings
+/.sonarqube
+/.github
+/.claude
+
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+*.ncrunchsolution
+/ssl
