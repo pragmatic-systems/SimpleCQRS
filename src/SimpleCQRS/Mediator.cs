@@ -12,7 +12,7 @@ public class Mediator(IServiceProvider provider)
 
     private sealed record MediatorCacheEntry(MediatorMap Handler, MediatorMap Behaviour);
 
-    private readonly ConcurrentDictionary<(Type, Type), MediatorCacheEntry> _cache = new();
+    private readonly ConcurrentDictionary<(Type, Type?), MediatorCacheEntry> _cache = new();
 
     public async Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
     {
@@ -44,8 +44,7 @@ public class Mediator(IServiceProvider provider)
                 var next = handlerDelegate;
                 handlerDelegate = () =>
                 {
-                    var result = cacheEntry.Behaviour.Method.DynamicInvoke(behavior, request, next, cancellationToken);
-                    return (Task<TResponse>)result;
+                    return (Task<TResponse>)cacheEntry.Behaviour.Method.DynamicInvoke(behavior, request, next, cancellationToken);
                 };
             }
 
@@ -80,7 +79,7 @@ public class Mediator(IServiceProvider provider)
 
             Func<Task> handlerDelegate = () =>
             {
-                return (Task) cacheEntry.Handler.Method.DynamicInvoke(handler, request, cancellationToken);
+                return (Task)cacheEntry.Handler.Method.DynamicInvoke(handler, request, cancellationToken);
             };
 
             foreach (var behavior in behaviors)
@@ -88,7 +87,7 @@ public class Mediator(IServiceProvider provider)
                 var next = handlerDelegate;
                 handlerDelegate = () =>
                 {
-                    return (Task) cacheEntry.Behaviour.Method.DynamicInvoke(behavior, request, next, cancellationToken);
+                    return (Task)cacheEntry.Behaviour.Method.DynamicInvoke(behavior, request, next, cancellationToken);
                 };
             }
 
@@ -106,9 +105,10 @@ public class Mediator(IServiceProvider provider)
         var handlerType = typeof(IRequestHandler<,>).MakeGenericType(requestType, responseType);
         var handlerParam = Expression.Parameter(handlerType, "handler");
         var requestParam = Expression.Parameter(requestType, "request");
-        var ctParam = Expression.Parameter(typeof(CancellationToken), "ctParam");
+        var ctParam = Expression.Parameter(typeof(CancellationToken), "ct");
 
-        var handleMethod = handlerType.GetMethod("Handle", new[] { requestType, typeof(CancellationToken) });
+        var handleMethod = handlerType.GetMethod("Handle", new[] { requestType, typeof(CancellationToken) })
+            ?? throw new InvalidOperationException("Cannot resolve Handle method for type: " + handlerType.FullName);
         MethodCallExpression expr = Expression.Call(handlerParam, handleMethod, requestParam, ctParam);
         var handlerDelegate = Expression.Lambda(expr, handlerParam, requestParam, ctParam).Compile();
 
@@ -120,9 +120,11 @@ public class Mediator(IServiceProvider provider)
         var handlerType = typeof(IRequestHandler<>).MakeGenericType(requestType);
         var handlerParam = Expression.Parameter(handlerType, "handler");
         var requestParam = Expression.Parameter(requestType, "request");
-        var ctParam = Expression.Parameter(typeof(CancellationToken), "ctParam");
+        var ctParam = Expression.Parameter(typeof(CancellationToken), "ct");
 
-        var handleMethod = handlerType.GetMethod("Handle", new[] { requestType, typeof(CancellationToken) });
+        var handleMethod = handlerType.GetMethod("Handle", new[] { requestType, typeof(CancellationToken) })
+            ?? throw new InvalidOperationException("Cannot resolve Handle method for type: " + handlerType.FullName);
+
         MethodCallExpression expr = Expression.Call(handlerParam, handleMethod, requestParam, ctParam);
         var handlerDelegate = Expression.Lambda(expr, handlerParam, requestParam, ctParam).Compile();
 
@@ -137,9 +139,11 @@ public class Mediator(IServiceProvider provider)
         var handlerParam = Expression.Parameter(handlerType, "handler");
         var requestParam = Expression.Parameter(requestType, "input");
         var nextParam = Expression.Parameter(nextType, "next");
-        var ctParam = Expression.Parameter(typeof(CancellationToken), "ctParam");
+        var ctParam = Expression.Parameter(typeof(CancellationToken), "ct");
 
-        var handleMethod = handlerType.GetMethod("Handle", new Type[] { requestType, nextType, typeof(CancellationToken) });
+        var handleMethod = handlerType.GetMethod("Handle", new Type[] { requestType, nextType, typeof(CancellationToken) })
+            ?? throw new InvalidOperationException("Cannot resolve Handle method for type: " + handlerType.FullName);
+
         MethodCallExpression expr = Expression.Call(handlerParam, handleMethod, requestParam, nextParam, ctParam);
         var handlerDelegate = Expression.Lambda(expr, handlerParam, requestParam, nextParam, ctParam).Compile();
 
@@ -154,9 +158,11 @@ public class Mediator(IServiceProvider provider)
         var handlerParam = Expression.Parameter(handlerType, "handler");
         var requestParam = Expression.Parameter(requestType, "input");
         var nextParam = Expression.Parameter(nextType, "next");
-        var ctParam = Expression.Parameter(typeof(CancellationToken), "ctParam");
+        var ctParam = Expression.Parameter(typeof(CancellationToken), "ct");
 
-        var handleMethod = handlerType.GetMethod("Handle", new Type[] { requestType, nextType, typeof(CancellationToken) });
+        var handleMethod = handlerType.GetMethod("Handle", new Type[] { requestType, nextType, typeof(CancellationToken) })
+            ?? throw new InvalidOperationException("Cannot resolve Handle method for type: " + handlerType.FullName);
+
         MethodCallExpression expr = Expression.Call(handlerParam, handleMethod, requestParam, nextParam, ctParam);
         var handlerDelegate = Expression.Lambda(expr, handlerParam, requestParam, nextParam, ctParam).Compile();
 
