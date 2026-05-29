@@ -200,7 +200,7 @@ Task("__BeginSonarScan")
 				VsCoverageReportsPath = reportPaths,
 			});
 
-			DotNetBuild();
+			DotNetBuild("*.sln");
 		});
 
 Task("__EndSonarScan")
