@@ -1,0 +1,34 @@
+
+name: Pack and Push Solution
+run-name: Pack and Push Solution
+
+on:
+  push:
+    branches:    
+      - main
+
+jobs:
+  Pack-And-Push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # This is nescessary so it does not conflict with git-version
+
+      - name: Run cake step
+        uses: cake-build/cake-action@v3
+        with:
+          script-path: build.cake
+          target: FullPackAndPush
+          ApiKey: ${{ secrets.NUGET_APIKEY }}
+          Source: ${{ vars.NUGET_SOURCE }}
+          ContainerRegistry: ${{ vars.CONTAINER_REGISTRY }}
+          ContainerRegistryToken: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
+          ContainerRegistryUserName: ${{ vars.CONTAINER_REGISTRY_USERNAME }}
+
+      - name: Publish Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: Artifacts
+          path: ./artifacts/
