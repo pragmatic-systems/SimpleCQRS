@@ -16,6 +16,8 @@ public class Mediator(IServiceProvider provider)
 
     public async Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
+
         try
         {
             var requestType = request.GetType();
@@ -23,7 +25,7 @@ public class Mediator(IServiceProvider provider)
 
             var cacheEntry = _cache.GetOrAdd((requestType, responseType), _ =>
             {
-                var handlerMap = GetHanderMap(requestType, responseType);
+                var handlerMap = GetHandlerMap(requestType, responseType);
                 var behaviourMap = GetBehaviourMap(requestType, responseType);
 
                 return new MediatorCacheEntry(
@@ -36,7 +38,10 @@ public class Mediator(IServiceProvider provider)
 
             Func<Task<TResponse>> handlerDelegate = () =>
             {
-                return (Task<TResponse>)cacheEntry.Handler.Method.DynamicInvoke(handler, request, cancellationToken);
+                var result = cacheEntry.Handler.Method.DynamicInvoke(handler, request, cancellationToken)
+                    ?? throw new InvalidOperationException("Cannot resolve handler for " + cacheEntry.Handler.Type);
+
+                return (Task<TResponse>)result;
             };
 
             foreach (var behavior in behaviors)
@@ -44,7 +49,10 @@ public class Mediator(IServiceProvider provider)
                 var next = handlerDelegate;
                 handlerDelegate = () =>
                 {
-                    return (Task<TResponse>)cacheEntry.Behaviour.Method.DynamicInvoke(behavior, request, next, cancellationToken);
+                    var result = cacheEntry.Behaviour.Method.DynamicInvoke(behavior, request, next, cancellationToken)
+                        ?? throw new InvalidOperationException("Cannot resolve handler for " + cacheEntry.Behaviour.Type);
+
+                    return (Task<TResponse>)result;
                 };
             }
 
@@ -60,13 +68,15 @@ public class Mediator(IServiceProvider provider)
     public async Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
         where TRequest : IRequest
     {
+        ArgumentNullException.ThrowIfNull(request);
+
         try
         {
             var requestType = request.GetType();
 
             var cacheEntry = _cache.GetOrAdd((requestType, null), _ =>
             {
-                var handlerMap = GetHanderMap(requestType);
+                var handlerMap = GetHandlerMap(requestType);
                 var behaviourMap = GetBehaviourMap(requestType);
 
                 return new MediatorCacheEntry(
@@ -79,7 +89,10 @@ public class Mediator(IServiceProvider provider)
 
             Func<Task> handlerDelegate = () =>
             {
-                return (Task)cacheEntry.Handler.Method.DynamicInvoke(handler, request, cancellationToken);
+                var result = cacheEntry.Handler.Method.DynamicInvoke(handler, request, cancellationToken)
+                    ?? throw new InvalidOperationException("Cannot resolve handler for " + cacheEntry.Handler.Type);
+
+                return (Task)result;
             };
 
             foreach (var behavior in behaviors)
@@ -87,7 +100,10 @@ public class Mediator(IServiceProvider provider)
                 var next = handlerDelegate;
                 handlerDelegate = () =>
                 {
-                    return (Task)cacheEntry.Behaviour.Method.DynamicInvoke(behavior, request, next, cancellationToken);
+                    var result = cacheEntry.Behaviour.Method.DynamicInvoke(behavior, request, next, cancellationToken)
+                        ?? throw new InvalidOperationException("Cannot resolve handler for " + cacheEntry.Behaviour.Type);
+
+                    return (Task)result;
                 };
             }
 
@@ -100,7 +116,7 @@ public class Mediator(IServiceProvider provider)
         }
     }
 
-    private static MediatorMap GetHanderMap(Type requestType, Type responseType)
+    private static MediatorMap GetHandlerMap(Type requestType, Type responseType)
     {
         var handlerType = typeof(IRequestHandler<,>).MakeGenericType(requestType, responseType);
         var handlerParam = Expression.Parameter(handlerType, "handler");
@@ -115,7 +131,7 @@ public class Mediator(IServiceProvider provider)
         return new MediatorMap(handlerType, handlerDelegate);
     }
 
-    private static MediatorMap GetHanderMap(Type requestType)
+    private static MediatorMap GetHandlerMap(Type requestType)
     {
         var handlerType = typeof(IRequestHandler<>).MakeGenericType(requestType);
         var handlerParam = Expression.Parameter(handlerType, "handler");
