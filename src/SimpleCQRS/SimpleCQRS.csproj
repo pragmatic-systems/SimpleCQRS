@@ -7,6 +7,7 @@
     <IsPackable>true</IsPackable>
     <PackageId>Pragsys.CQRS</PackageId>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/pragmatic-systems/Pragsys.CQRS</RepositoryUrl>
   </PropertyGroup>
   
   <ItemGroup>
