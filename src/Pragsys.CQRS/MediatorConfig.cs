@@ -23,6 +23,11 @@ public class MediatorConfig
         RegisterServicesFromAssemblies(targetAssemblies, ServiceLifetime.Singleton);
     }
 
+    public void RegisterScopedServicesFromAssemblies(params Assembly[] targetAssemblies)
+    {
+        RegisterServicesFromAssemblies(targetAssemblies, ServiceLifetime.Scoped);
+    }
+
     private void RegisterServicesFromAssemblies(Assembly[] targetAssemblies, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
         ArgumentNullException.ThrowIfNull(targetAssemblies);
