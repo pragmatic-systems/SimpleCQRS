@@ -55,6 +55,9 @@ var sonarHostUrl = Argument<string>("SonarHostUrl", null)
     ?? EnvironmentVariable<string>("INPUT_SONARHOSTURL", null)
 		?? "http://localhost:9000";
 
+var sonarBranch = Argument<string>("SonarBranch", null)
+    ?? EnvironmentVariable<string>("INPUT_SONARBRANCH", null);
+
 var artifactsFolder = "./artifacts";
 var packagesFolder = System.IO.Path.Combine(artifactsFolder, "packages");
 var swaggerFolder = System.IO.Path.Combine(artifactsFolder, "swagger");
@@ -132,7 +135,9 @@ Task("__SonarArgsCheck")
 			
 		if (string.IsNullOrEmpty(sonarProjectName))
 			throw new ArgumentException("SonarProjectName is required");
-			
+
+		if (string.IsNullOrEmpty(sonarBranch))
+			throw new ArgumentException("SonarBranch is required");
 	});
 
 Task("__Test")
@@ -198,7 +203,7 @@ Task("__SonarScan")
 				Organization = sonarOrg,
 				Url = sonarHostUrl,
 				VsCoverageReportsPath = reportPaths,
-				Branch = "branch"
+				Branch = sonarBranch
 			});
 
 			var sln = GetFiles("*.slnx")

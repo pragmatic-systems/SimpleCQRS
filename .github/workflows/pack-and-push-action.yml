@@ -26,6 +26,8 @@ jobs:
           SonarOrg: ${{ vars.SONARORG }}
           SonarToken: ${{ secrets.SONARTOKEN }}
           SonarHostUrl: ${{ vars.SONARHOST }}
+          SonarProjectKey: ${{ secrets.SONAR_PROJ_KEY }}
+          SonarProjectName: ${{ vars.SONAR_PROJ_NAME }}
 
       - name: Publish Artifacts
         uses: actions/upload-artifact@v7
