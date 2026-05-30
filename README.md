@@ -1,4 +1,4 @@
-# SimpleCQRS
+# Pragsys.CQRS
 
 A Simple CQRS implementation that mimics the MediatR interfaces.
 

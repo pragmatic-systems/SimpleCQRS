@@ -23,6 +23,9 @@ jobs:
           target: NugetPackAndPush
           NuGetApiKey: ${{ secrets.PUBLIC_NUGET_APIKEY }}
           NuGetSource: ${{ vars.PUBLIC_NUGET_SOURCE }}
+          SonarOrg: ${{ vars.SONARORG }}
+          SonarToken: ${{ secrets.SONARTOKEN }}
+          SonarHostUrl: ${{ vars.SONARHOST }}
 
       - name: Publish Artifacts
         uses: actions/upload-artifact@v7

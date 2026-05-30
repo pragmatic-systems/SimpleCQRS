@@ -26,7 +26,10 @@ jobs:
         uses: cake-build/cake-action@v3
         with:
           script-path: build.cake
-          target: BuildAndTest
+          target: BuildAndSonarScan
+          SonarOrg: ${{ vars.SONARORG }}
+          SonarToken: ${{ secrets.SONARTOKEN }}
+          SonarHostUrl: ${{ vars.SONARHOST }}
 
       - name: Publish Test Report with Pull Request Comment
         uses: ctrf-io/github-test-reporter@v1
